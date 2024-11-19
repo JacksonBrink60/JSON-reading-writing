@@ -5,10 +5,9 @@ def get_data():
     try:
         with open("tasks.json", "r") as file:
             return json.load(file)
-    except FileNotFoundError:
-        print("file not found")
-    except json.JSONDecodeError:
-        print("Invalid JSON")
+    except (FileNotFoundError, json.JSONDecodeError):
+        print("File not found or invalid JSON")
+        return []
 
 
 def save_tasks(data):
@@ -16,72 +15,61 @@ def save_tasks(data):
         json.dump(data, file, indent=4)
 
 
-def add_task(data, number, task):
-    data.append({"task": task, "number": number, "status": "incomplete"})
+def add_task(data):
+    while True:
+        task_id = input("Enter task ID: ")
+        if not any(task["number"] == task_id for task in data):
+            break
+        print("Task ID already exists.")
+    task_name = input("Enter task name: ")
+    data.append({"task": task_name, "number": task_id, "status": "incomplete"})
     data.sort(key=lambda x: x['number'])
     save_tasks(data)
-    return data
+    print("Task added.")
 
 
-def view_tasks(data):
+def view_tasks(data, status=None):
     for task in data:
-        print(f"Number: {task['number']} , task: {task['task']}")
-
-
-def status_tasks(data, status):
-    for task in data:
-        if task['status'] == status:
-            print(f'{status}:{task["task"]} number: {task["number"]}')
+        if status is None or task['status'] == status:
+            print(f"ID: {task['number']}, Task: {
+                  task['task']}, Status: {task['status']}")
 
 
 def change_status(data):
-    number = input("What number task would you like to change: ")
+    task_id = input("Enter task ID to mark as complete: ")
     for task in data:
-        if str(task['number']) == number:
-            task['status'] = 'complete'
+        if task['number'] == task_id:
+            task['status'] = "complete"
             save_tasks(data)
-            break
+            print("Task marked as complete.")
+            return
+    print("Task not found.")
 
 
 def get_input(data):
     while True:
-        action = input("""Please choose an option:
-1. View completed tasks
-2. View incomplete tasks
-3. View all tasks
-4. Mark a task as complete
-5. Add a new task
-6. Quit
-choice: """)
-        try:
-            action = int(action)
-            if action == 1:
-                status = "complete",
-                status_tasks(data, status)
-            elif action == 2:
-                status = "incomplete"
-                status_tasks(data, status)
-            elif action == 3:
-                view_tasks(data)
-            elif action == 4:
-                change_status(data)
-            elif action == 5:
-                number = len(data) + 1
-                task = input("What task would you like to add: ")
-                add_task(data, number, task)
-                view_tasks(data)
-            elif action == 6:
-                break
-            else:
-                print("invalid choice")
-        except ValueError:
-            print("invalid choice")
+        print("\nOptions:\n1. View all tasks\n2. View completed tasks\n3. View incomplete tasks\n4. Mark task as complete\n5. Add a task\n6. Quit")
+        choice = input("Choose an option: ")
+        if choice == "1":
+            view_tasks(data)
+        elif choice == "2":
+            view_tasks(data, status="complete")
+        elif choice == "3":
+            view_tasks(data, status="incomplete")
+        elif choice == "4":
+            change_status(data)
+        elif choice == "5":
+            add_task(data)
+        elif choice == "6":
+            break
+        else:
+            print("Invalid choice. Please try again.")
 
 
 def main():
-    data = get_data() or []
+    data = get_data()
     get_input(data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
